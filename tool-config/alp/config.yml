@@ -4,5 +4,21 @@ reverse: true                   # boolean
 query_string: true              # boolean
 output: count,5xx,4xx,3xx,method,uri,min,max,sum,avg,p99                    # string(comma separated)
 
-# matching_groups:            # array
-# -  
+matching_groups:            # array
+- ^/api/auth$
+- ^/api/signout$
+- ^/api/user/me$
+- ^/api/isu$
+- ^/api/isu/[^/]+$
+- ^/api/isu/[^/]+/icon$
+- ^/api/isu/[^/]+/graph$
+- ^/api/condition/[^/]+$
+- ^/api/trend$
+- ^/api/condition/[^/]+$
+- ^/$
+- ^/isu/[^/]+$
+- ^/isu/[^/]+/condition$
+- ^/isu/[^/]+/graph$
+- ^/register$
+- ^/assets/[^/]+$
+
