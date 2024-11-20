@@ -11,11 +11,11 @@ matching_groups:            # array
 - ^/api/isu$
 - ^/api/isu/[^/]+$
 - ^/api/isu/[^/]+/icon$
-- ^/api/isu/[^/]+/graph$
+- ^/api/isu/[^/]+/graph
 - ^/api/condition/[^/]+$
 - ^/api/trend$
 - ^/api/condition/[^/]+$
-- ^/$
+- ^/
 - ^/isu/[^/]+$
 - ^/isu/[^/]+/condition$
 - ^/isu/[^/]+/graph$
