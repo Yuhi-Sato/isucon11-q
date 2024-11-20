@@ -1,3 +1,5 @@
+github.com/catatsuy/cache v0.2.0 h1:AGQLRAYzU/HSHaxQB1Ih2mFrWT2Kwd8veaUukaFT14s=
+github.com/catatsuy/cache v0.2.0/go.mod h1:Ppaed4sPVG6q25/vLaj1B2ZG6VRh1XbGI+Gx1v5//2U=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
