@@ -1064,7 +1064,7 @@ func getTrend(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		res := []TrendResponse{}
+		res = []TrendResponse{}
 
 		for _, character := range characterList {
 			isuList := []Isu{}
@@ -1132,7 +1132,7 @@ func getTrend(c echo.Context) error {
 				})
 		}
 
-		trendCache.Set("", res, 500*time.Millisecond)
+		trendCache.Set("", res, time.Millisecond)
 	}
 
 	return c.JSON(http.StatusOK, res)
