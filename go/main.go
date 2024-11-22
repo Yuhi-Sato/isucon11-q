@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	_ "net/http/pprof"
 
 	"github.com/catatsuy/cache"
 	"github.com/dgrijalva/jwt-go"
@@ -211,6 +212,10 @@ func init() {
 }
 
 func main() {
+	go func() {
+		log.Fatal(http.ListenAndServe(":6060", nil))
+	}()
+
 	e := echo.New()
 	// e.Debug = true
 	// e.Logger.SetLevel(log.DEBUG)
