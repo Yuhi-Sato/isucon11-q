@@ -10,13 +10,13 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-	_ "net/http/pprof"
 
 	"github.com/catatsuy/cache"
 	"github.com/dgrijalva/jwt-go"
@@ -1172,7 +1172,7 @@ func getTrend(c echo.Context) error {
 						return characterInfoIsuConditions[i].Timestamp > characterInfoIsuConditions[j].Timestamp
 					})
 					sort.Slice(characterWarningIsuConditions, func(i, j int) bool {
-						// return characterWarningIsuConditions[i].Timestamp > characterWarningIsuConditions[j].Timestamp
+						return characterWarningIsuConditions[i].Timestamp > characterWarningIsuConditions[j].Timestamp
 					})
 					sort.Slice(characterCriticalIsuConditions, func(i, j int) bool {
 						return characterCriticalIsuConditions[i].Timestamp > characterCriticalIsuConditions[j].Timestamp
