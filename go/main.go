@@ -283,7 +283,7 @@ func getUserIDFromSession(c echo.Context) (string, int, error) {
 	jiaUserID := _jiaUserID.(string)
 	var count int
 
-	err = db.Get(&count, "SELECT COUNT(*) FROM `user` WHERE `jia_user_id` = ?",
+	err = db.Get(&count, "SELECT 1 FROM `user` WHERE `jia_user_id` = ?",
 		jiaUserID)
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf("db error: %v", err)
@@ -1167,7 +1167,7 @@ func getTrend(c echo.Context) error {
 						return characterInfoIsuConditions[i].Timestamp > characterInfoIsuConditions[j].Timestamp
 					})
 					sort.Slice(characterWarningIsuConditions, func(i, j int) bool {
-						return characterWarningIsuConditions[i].Timestamp > characterWarningIsuConditions[j].Timestamp
+						// return characterWarningIsuConditions[i].Timestamp > characterWarningIsuConditions[j].Timestamp
 					})
 					sort.Slice(characterCriticalIsuConditions, func(i, j int) bool {
 						return characterCriticalIsuConditions[i].Timestamp > characterCriticalIsuConditions[j].Timestamp
