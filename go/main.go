@@ -86,13 +86,14 @@ type GetIsuListResponse struct {
 }
 
 type IsuCondition struct {
-	ID         int       `db:"id"`
-	JIAIsuUUID string    `db:"jia_isu_uuid"`
-	Timestamp  time.Time `db:"timestamp"`
-	IsSitting  bool      `db:"is_sitting"`
-	Condition  string    `db:"condition"`
-	Message    string    `db:"message"`
-	CreatedAt  time.Time `db:"created_at"`
+	ID             int       `db:"id"`
+	JIAIsuUUID     string    `db:"jia_isu_uuid"`
+	Timestamp      time.Time `db:"timestamp"`
+	IsSitting      bool      `db:"is_sitting"`
+	Condition      string    `db:"condition"`
+	ConditionLevel string    `db:"condition_level"`
+	Message        string    `db:"message"`
+	CreatedAt      time.Time `db:"created_at"`
 }
 
 type MySQLConnectionEnv struct {
@@ -353,6 +354,27 @@ func postInitialize(c echo.Context) error {
 		err = os.WriteFile(filepath, isu.Image, 0644)
 		if err != nil {
 			c.Logger().Errorf("write file error : %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+	}
+
+	var isuConditions []IsuCondition
+	err = db.Select(isuConditions, "SELECT * FROM `isu_condition`")
+	if err != nil {
+		c.Logger().Errorf("db error : %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	for _, isuCondition := range isuConditions {
+		conditionLevel, err := calculateConditionLevel(isuCondition.Condition)
+		if err != nil {
+			c.Logger().Errorf("cal error : %v", err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+
+		_, err = db.Exec("UPDATE `isu_condition` SET `condition_level` = ? WHERE `id` = ?", conditionLevel, isuCondition.ID)
+		if err != nil {
+			c.Logger().Errorf("db error : %v", err)
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -1249,12 +1271,19 @@ func postIsuCondition(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "bad request body")
 		}
 
+		conditionLevel, err := calculateConditionLevel(cond.Condition)
+		if err != nil {
+			c.Logger().Errorf("cal error")
+			return c.NoContent(http.StatusInternalServerError)
+		}
+
 		isuCondition = append(isuCondition, IsuCondition{
-			JIAIsuUUID: jiaIsuUUID,
-			Timestamp:  timestamp,
-			IsSitting:  cond.IsSitting,
-			Condition:  cond.Condition,
-			Message:    cond.Message,
+			JIAIsuUUID:     jiaIsuUUID,
+			Timestamp:      timestamp,
+			IsSitting:      cond.IsSitting,
+			Condition:      cond.Condition,
+			ConditionLevel: conditionLevel,
+			Message:        cond.Message,
 		})
 	}
 
