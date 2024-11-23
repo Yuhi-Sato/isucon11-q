@@ -1059,22 +1059,42 @@ func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, c
 
 	conditions := []IsuCondition{}
 	var err error
+	conditionLevels := make([]string, 0, len(conditionLevel))
+	for k := range conditionLevel {
+		conditionLevels = append(conditionLevels, k)
+	}
 
 	if startTime.IsZero() {
-		err = db.Select(&conditions,
-			"SELECT id, jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime,
-		)
+		query := "SELECT id, jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at, condition_level FROM `isu_condition` WHERE `jia_isu_uuid` = ?" +
+			"	AND `timestamp` < ? AND condition_level IN (?)" +
+			"	ORDER BY `timestamp` DESC LIMIT ?"
+
+		query, args, err := sqlx.In(query, jiaIsuUUID, endTime, conditionLevels, limit)
+		query = db.Rebind(query)
+		if err != nil {
+			return nil, fmt.Errorf("db error: %v", err)
+		}
+
+		err = db.Select(&conditions, query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("db error: %v", err)
+		}
 	} else {
-		err = db.Select(&conditions,
-			"SELECT id, jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	AND ? <= `timestamp`"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime, startTime,
-		)
+		query := "SELECT id, jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at, condition_level FROM `isu_condition` WHERE `jia_isu_uuid` = ?" +
+			"	AND `timestamp` < ?" +
+			"	AND ? <= `timestamp` condition_level IN (?)" +
+			"	ORDER BY `timestamp` DESC LIMIT ?"
+
+		query, args, err := sqlx.In(query, jiaIsuUUID, endTime, startTime, conditionLevels, limit)
+		query = db.Rebind(query)
+		if err != nil {
+			return nil, fmt.Errorf("db error: %v", err)
+		}
+
+		err = db.Select(&conditions, query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("db error: %v", err)
+		}
 	}
 	if err != nil {
 		return nil, fmt.Errorf("db error: %v", err)
@@ -1288,7 +1308,7 @@ func postIsuCondition(c echo.Context) error {
 		})
 	}
 
-	query := "INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message` `condition_level`) VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message, :condition_level)"
+	query := "INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`, `condition_level`) VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message, :condition_level)"
 	_, err = tx.NamedExec(query, isuCondition)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
