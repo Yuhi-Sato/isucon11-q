@@ -359,7 +359,7 @@ func postInitialize(c echo.Context) error {
 	}
 
 	var isuConditions []IsuCondition
-	err = db.Select(&isuConditions, "SELECT `jia_isu_uuid`, `condition` FROM `isu_condition`")
+	err = db.Select(&isuConditions, "SELECT `id`, `jia_isu_uuid`, `condition` FROM `isu_condition`")
 	if err != nil {
 		c.Logger().Errorf("db error : %v", err)
 		return c.NoContent(http.StatusInternalServerError)
@@ -372,8 +372,8 @@ func postInitialize(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		_, err = db.Exec("UPDATE `isu_condition` SET `condition_level` = ? WHERE `jia_isu_uuid` = ?",
-			conditionLevel, isuCondition.JIAIsuUUID)
+		_, err = db.Exec("UPDATE `isu_condition` SET `condition_level` = ? WHERE `id` = ?",
+			conditionLevel, isuCondition.ID)
 		if err != nil {
 			c.Logger().Errorf("db error : %v", err)
 			return c.NoContent(http.StatusInternalServerError)
@@ -1102,16 +1102,23 @@ func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, c
 
 	conditionsResponse := []*GetIsuConditionResponse{}
 	for _, c := range conditions {
-		data := GetIsuConditionResponse{
-			JIAIsuUUID:     c.JIAIsuUUID,
-			IsuName:        isuName,
-			Timestamp:      c.Timestamp.Unix(),
-			IsSitting:      c.IsSitting,
-			Condition:      c.Condition,
-			ConditionLevel: c.ConditionLevel,
-			Message:        c.Message,
+		cLevel, err := calculateConditionLevel(c.Condition)
+		if err != nil {
+			continue
 		}
-		conditionsResponse = append(conditionsResponse, &data)
+
+		if _, ok := conditionLevel[cLevel]; ok {
+			data := GetIsuConditionResponse{
+				JIAIsuUUID:     c.JIAIsuUUID,
+				IsuName:        isuName,
+				Timestamp:      c.Timestamp.Unix(),
+				IsSitting:      c.IsSitting,
+				Condition:      c.Condition,
+				ConditionLevel: cLevel,
+				Message:        c.Message,
+			}
+			conditionsResponse = append(conditionsResponse, &data)
+		}
 	}
 
 	// if len(conditionsResponse) > limit {
