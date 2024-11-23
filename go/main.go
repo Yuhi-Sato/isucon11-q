@@ -359,7 +359,7 @@ func postInitialize(c echo.Context) error {
 	}
 
 	var isuConditions []IsuCondition
-	err = db.Select(isuConditions, "SELECT * FROM `isu_condition`")
+	err = db.Select(&isuConditions, "SELECT `id`, `condition` FROM `isu_condition`")
 	if err != nil {
 		c.Logger().Errorf("db error : %v", err)
 		return c.NoContent(http.StatusInternalServerError)
