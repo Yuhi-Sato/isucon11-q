@@ -95,6 +95,17 @@ type IsuCondition struct {
 	CreatedAt  time.Time `db:"created_at"`
 }
 
+type IsuIsuCondition struct {
+	ID         int        `db:"id"`
+	JIAIsuUUID string     `db:"jia_isu_uuid"`
+	Name       string     `db:"name"`
+	Character  string     `db:"character"`
+	Timestamp  *time.Time `db:"timestamp"`
+	IsSitting  *bool      `db:"is_sitting"`
+	Condition  *string    `db:"condition"`
+	Message    *string    `db:"message"`
+}
+
 type MySQLConnectionEnv struct {
 	Host     string
 	Port     string
@@ -478,47 +489,59 @@ func getIsuList(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	isuList := []Isu{}
-	err = db.Select(
-		&isuList,
-		"SELECT * FROM `isu` WHERE `jia_user_id` = ? ORDER BY `id` DESC",
-		jiaUserID)
+	// isuList := []Isu{}
+	// err = db.Select(
+	// 	&isuList,
+	// 	"SELECT * FROM `isu` WHERE `jia_user_id` = ? ORDER BY `id` DESC",
+	// 	jiaUserID)
+	// if err != nil {
+	// 	c.Logger().Errorf("db error: %v", err)
+	// 	return c.NoContent(http.StatusInternalServerError)
+	// }
+
+	var isuIsuCondition []IsuIsuCondition
+	query := `
+		SELECT i.id,
+			i.jia_isu_uuid,
+			i.name,
+			i.character,
+			ic1.timestamp,
+			ic1.is_sitting,
+			ic1.condition,
+			ic1.message
+		FROM isu i
+		LEFT JOIN isu_condition ic1
+			ON ic1.jia_isu_uuid = i.jia_isu_uuid
+				AND ic1.timestamp = (SELECT MAX(timestamp)
+										FROM isu_condition ic2
+										WHERE ic2.jia_isu_uuid = i.jia_isu_uuid)
+		WHERE i.jia_user_id = ?
+		ORDER BY id DESC
+	`
+	err = db.Select(&isuIsuCondition, query, jiaUserID)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	responseList := []GetIsuListResponse{}
-	for _, isu := range isuList {
-		var lastCondition IsuCondition
-		foundLastCondition := true
-		err = db.Get(&lastCondition, "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1",
-			isu.JIAIsuUUID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				foundLastCondition = false
-			} else {
-				c.Logger().Errorf("db error: %v", err)
-				return c.NoContent(http.StatusInternalServerError)
-			}
-		}
-
+	for _, isu := range isuIsuCondition {
 		var formattedCondition *GetIsuConditionResponse
-		if foundLastCondition {
-			conditionLevel, err := calculateConditionLevel(lastCondition.Condition)
+		if isu.Condition != nil {
+			conditionLevel, err := calculateConditionLevel(*isu.Condition)
 			if err != nil {
 				c.Logger().Error(err)
 				return c.NoContent(http.StatusInternalServerError)
 			}
 
 			formattedCondition = &GetIsuConditionResponse{
-				JIAIsuUUID:     lastCondition.JIAIsuUUID,
+				JIAIsuUUID:     isu.JIAIsuUUID,
 				IsuName:        isu.Name,
-				Timestamp:      lastCondition.Timestamp.Unix(),
-				IsSitting:      lastCondition.IsSitting,
-				Condition:      lastCondition.Condition,
+				Timestamp:      isu.Timestamp.Unix(),
+				IsSitting:      *isu.IsSitting,
+				Condition:      *isu.Condition,
 				ConditionLevel: conditionLevel,
-				Message:        lastCondition.Message,
+				Message:        *isu.Message,
 			}
 		}
 
@@ -530,6 +553,49 @@ func getIsuList(c echo.Context) error {
 			LatestIsuCondition: formattedCondition}
 		responseList = append(responseList, res)
 	}
+
+	// responseList := []GetIsuListResponse{}
+	// for _, isu := range isuList {
+	// 	var lastCondition IsuCondition
+	// 	foundLastCondition := true
+	// 	err = db.Get(&lastCondition, "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1",
+	// 		isu.JIAIsuUUID)
+	// 	if err != nil {
+	// 		if errors.Is(err, sql.ErrNoRows) {
+	// 			foundLastCondition = false
+	// 		} else {
+	// 			c.Logger().Errorf("db error: %v", err)
+	// 			return c.NoContent(http.StatusInternalServerError)
+	// 		}
+	// 	}
+
+	// 	var formattedCondition *GetIsuConditionResponse
+	// 	if foundLastCondition {
+	// 		conditionLevel, err := calculateConditionLevel(lastCondition.Condition)
+	// 		if err != nil {
+	// 			c.Logger().Error(err)
+	// 			return c.NoContent(http.StatusInternalServerError)
+	// 		}
+
+	// 		formattedCondition = &GetIsuConditionResponse{
+	// 			JIAIsuUUID:     lastCondition.JIAIsuUUID,
+	// 			IsuName:        isu.Name,
+	// 			Timestamp:      lastCondition.Timestamp.Unix(),
+	// 			IsSitting:      lastCondition.IsSitting,
+	// 			Condition:      lastCondition.Condition,
+	// 			ConditionLevel: conditionLevel,
+	// 			Message:        lastCondition.Message,
+	// 		}
+	// 	}
+
+	// 	res := GetIsuListResponse{
+	// 		ID:                 isu.ID,
+	// 		JIAIsuUUID:         isu.JIAIsuUUID,
+	// 		Name:               isu.Name,
+	// 		Character:          isu.Character,
+	// 		LatestIsuCondition: formattedCondition}
+	// 	responseList = append(responseList, res)
+	// }
 
 	return c.JSON(http.StatusOK, responseList)
 }
