@@ -1082,7 +1082,7 @@ func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, c
 	} else {
 		query := "SELECT id, jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at, condition_level FROM `isu_condition` WHERE `jia_isu_uuid` = ?" +
 			"	AND `timestamp` < ?" +
-			"	AND ? <= `timestamp` condition_level IN (?)" +
+			"	AND ? <= `timestamp` AND condition_level IN (?)" +
 			"	ORDER BY `timestamp` DESC LIMIT ?"
 
 		query, args, err := sqlx.In(query, jiaIsuUUID, endTime, startTime, conditionLevels, limit)
