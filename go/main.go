@@ -380,6 +380,16 @@ func postInitialize(c echo.Context) error {
 		}
 	}
 
+	cmd = exec.Command("make", "pprof-record")
+	cmd.Dir = "../"
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		c.Logger().Errorf("exec make pprof-record error: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
 	})
