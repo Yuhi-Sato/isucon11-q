@@ -782,14 +782,14 @@ func getIsuGraph(c echo.Context) error {
 	}
 	date := time.Unix(datetimeInt64, 0).Truncate(time.Hour)
 
-	var count int
-	err = db.Get(&count, "SELECT 1 FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
+	var id int
+	err = db.Get(&id, "SELECT id FROM `isu` WHERE `jia_user_id` = ? AND `jia_isu_uuid` = ?",
 		jiaUserID, jiaIsuUUID)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
-	if count == 0 {
+	if id == 0 {
 		return c.String(http.StatusNotFound, "not found: isu")
 	}
 
