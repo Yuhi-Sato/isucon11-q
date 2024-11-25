@@ -55,6 +55,8 @@ var (
 
 	trendCache = cache.NewReadHeavyCacheExpired[string, []TrendResponse]()
 	sf         = cache.NewSingleflightGroup[[]TrendResponse]()
+
+	conditionChannel = make(chan IsuCondition, 1000)
 )
 
 type Config struct {
@@ -263,8 +265,55 @@ func main() {
 		return
 	}
 
+	for i := 0; i < 3; i++ {
+		go postIsuConditionWorker()
+	}
+
 	serverPort := fmt.Sprintf(":%v", getEnv("SERVER_APP_PORT", "3000"))
 	e.Logger.Fatal(e.Start(serverPort))
+}
+
+func postIsuConditionWorker() {
+	var buffer []IsuCondition
+	ticker := time.NewTicker(5 * time.Second)
+
+	for {
+		select {
+		case condition := <-conditionChannel:
+			buffer = append(buffer, condition)
+			if len(buffer) >= 100 {
+				insertConditions(buffer)
+				buffer = []IsuCondition{}
+			}
+		case <-ticker.C:
+			if len(buffer) > 0 {
+				insertConditions(buffer)
+				buffer = []IsuCondition{}
+			}
+		}
+	}
+}
+
+func insertConditions(buffer []IsuCondition) {
+	tx, err := db.Beginx()
+	if err != nil {
+		log.Printf("db error: %v", err)
+		return
+	}
+	defer tx.Rollback()
+
+	query := "INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`) VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)"
+	_, err = tx.NamedExec(query, buffer)
+	if err != nil {
+		log.Printf("db error: %v", err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("db error: %v", err)
+		return
+	}
 }
 
 func getSession(r *http.Request) (*sessions.Session, error) {
@@ -1224,15 +1273,8 @@ func postIsuCondition(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request body")
 	}
 
-	tx, err := db.Beginx()
-	if err != nil {
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	defer tx.Rollback()
-
 	var count int
-	err = tx.Get(&count, "SELECT `id` FROM `isu` WHERE `jia_isu_uuid` = ?", jiaIsuUUID)
+	err = db.Get(&count, "SELECT `id` FROM `isu` WHERE `jia_isu_uuid` = ?", jiaIsuUUID)
 	if err != nil {
 		c.Logger().Errorf("db error: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
@@ -1258,17 +1300,8 @@ func postIsuCondition(c echo.Context) error {
 		})
 	}
 
-	query := "INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`) VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)"
-	_, err = tx.NamedExec(query, isuCondition)
-	if err != nil {
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		c.Logger().Errorf("db error: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
+	for _, ic := range isuCondition {
+		conditionChannel <- ic
 	}
 
 	return c.NoContent(http.StatusAccepted)
