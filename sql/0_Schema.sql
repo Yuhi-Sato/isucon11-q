@@ -17,16 +17,15 @@ CREATE TABLE `isu` (
 ALTER TABLE `isu` ADD INDEX `isu_jia_isu_uuid` (`jia_isu_uuid`);
 
 CREATE TABLE `isu_condition` (
-  `id` bigint AUTO_INCREMENT,
+  `id` bigint DEFAULT 0,
   `jia_isu_uuid` CHAR(36) NOT NULL,
   `timestamp` DATETIME NOT NULL,
   `is_sitting` TINYINT(1) NOT NULL,
   `condition` VARCHAR(255) NOT NULL,
   `message` VARCHAR(255) NOT NULL,
   `created_at` DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
-  PRIMARY KEY(`id`)
+  PRIMARY KEY(`jia_isu_uuid`, `timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
-ALTER TABLE `isu_condition` ADD INDEX `idx_jia_isu_uuid_timestamp`(`jia_isu_uuid`, `timestamp`);
 
 CREATE TABLE `user` (
   `jia_user_id` VARCHAR(255) PRIMARY KEY,
