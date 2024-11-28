@@ -17,7 +17,7 @@ CREATE TABLE `isu` (
 ALTER TABLE `isu` ADD INDEX `isu_jia_isu_uuid` (`jia_isu_uuid`);
 
 CREATE TABLE `isu_condition` (
-  `id` bigint AUTO_INCREMENT,
+  `id` bigint DEFAULT 0,
   `jia_isu_uuid` CHAR(36) NOT NULL,
   `timestamp` DATETIME NOT NULL,
   `is_sitting` TINYINT(1) NOT NULL,

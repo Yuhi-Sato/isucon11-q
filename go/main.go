@@ -525,7 +525,7 @@ func getIsuList(c echo.Context) error {
 	for _, isu := range isuList {
 		var lastCondition IsuCondition
 		foundLastCondition := true
-		err = db.Get(&lastCondition, "SELECT id, jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1",
+		err = db.Get(&lastCondition, "SELECT jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1",
 			isu.JIAIsuUUID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -1190,7 +1190,7 @@ func getTrend(c echo.Context) error {
 					for _, isu := range isuList {
 						conditions := []IsuCondition{}
 						err = db.Select(&conditions,
-							"SELECT id, jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1",
+							"SELECT jia_isu_uuid, timestamp, is_sitting, `condition`, message, created_at FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY `timestamp` DESC LIMIT 1",
 							isu.JIAIsuUUID,
 						)
 						if err != nil {
