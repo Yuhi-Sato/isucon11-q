@@ -15,7 +15,7 @@ matching_groups:            # array
 - ^/api/condition/[^/]+$
 - ^/api/trend$
 - ^/api/condition/[^/]+$
-- ^/
+- ^/\?jwt
 - ^/isu/[^/]+$
 - ^/isu/[^/]+/condition$
 - ^/isu/[^/]+/graph$
