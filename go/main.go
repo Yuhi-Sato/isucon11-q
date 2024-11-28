@@ -303,7 +303,7 @@ func insertConditions(buffer []IsuCondition) {
 	}
 	defer tx.Rollback()
 
-	query := "INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`) VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message)"
+	query := "INSERT INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`, `condition_level`) VALUES (:jia_isu_uuid, :timestamp, :is_sitting, :condition, :message, :condition_level)"
 	_, err = tx.NamedExec(query, buffer)
 	if err != nil {
 		log.Printf("db error: %v", err)
