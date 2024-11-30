@@ -1296,7 +1296,7 @@ func getTrend(c echo.Context) error {
 			return c.NoContent(http.StatusInternalServerError)
 		}
 
-		trendCache.Set("", res, 10*time.Millisecond)
+		trendCache.Set("", res, 400*time.Millisecond)
 	}
 
 	return c.JSON(http.StatusOK, res)
